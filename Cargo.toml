@@ -1,0 +1,10 @@
+[package]
+name = "vsag-sqlite"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+rusqlite = { git = "https://github.com/jiacai2050/rusqlite.git", branch = "vsag", features = ["modern_sqlite", "vtab", "loadable_extension", "functions"] }

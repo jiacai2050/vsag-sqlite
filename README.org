@@ -1,0 +1,22 @@
+#+TITLE: VSAG Extensions for SQLite
+#+DATE: 2024-12-04T22:55:37+0800
+#+LASTMOD: 2024-12-04T23:04:27+0800
+#+AUTHOR: Jiacai Liu
+
+* Tutorial
+- https://www.sqlite.org/vtab.html
+- https://github.com/asg017/sqlite-vec/
+- https://github.com/unum-cloud/usearch/blob/main/sqlite/README.md
+* Test
+- https://www.sqlite.org/cgi/src/file?name=ext/misc/vtablog.c
+#+begin_src sql
+.load target/debug/libvsag_sqlite.dylib
+
+CREATE VIRTUAL TABLE log USING vtablog(
+   schema='CREATE TABLE x(a,b,c)',
+   rows=25
+);
+SELECT * FROM log;
+
+insert into log(a, b, c) values (1,2,3);
+#+end_src
