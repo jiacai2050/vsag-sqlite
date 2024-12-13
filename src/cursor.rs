@@ -9,8 +9,20 @@ use crate::VsagTable;
 pub struct VsagCursor<'vtab> {
     /// Base class. Must be first
     base: ffi::sqlite3_vtab_cursor,
-
+    cursor_id: usize,
+    row_id: usize,
     phantom: PhantomData<&'vtab VsagTable>,
+}
+
+impl VsagCursor<'_> {
+    pub fn new(cursor_id: usize) -> Self {
+        Self {
+            base: ffi::sqlite3_vtab_cursor::default(),
+            cursor_id,
+            row_id: 0,
+            phantom: PhantomData,
+        }
+    }
 }
 
 unsafe impl VTabCursor for VsagCursor<'_> {

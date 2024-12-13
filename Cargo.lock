@@ -15,10 +15,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "base64"
+version = "0.21.7"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9d297deb1925b89f2ccc13d7635fa0714f12c87adce1c75356b39ca9b7178567"
+
+[[package]]
 name = "bitflags"
 version = "2.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b048fb63fd8b5923fc5aa7b340d8e156aec7ec02f0c78fa8a6ddc2613f6f71de"
+dependencies = [
+ "serde",
+]
 
 [[package]]
 name = "cfg-if"
@@ -109,6 +118,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "ron"
+version = "0.8.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b91f7eff05f748767f183df4320a63d6936e9c6107d97c9e6bdd9784f4289c94"
+dependencies = [
+ "base64",
+ "bitflags",
+ "serde",
+ "serde_derive",
+]
+
+[[package]]
 name = "rusqlite"
 version = "0.32.1"
 source = "git+https://github.com/jiacai2050/rusqlite.git?branch=vsag#9a741e954baabd9152ae78ee696097263bb18398"
@@ -119,6 +140,26 @@ dependencies = [
  "hashlink",
  "libsqlite3-sys",
  "smallvec",
+]
+
+[[package]]
+name = "serde"
+version = "1.0.216"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0b9781016e935a97e8beecf0c933758c97a5520d32930e460142b4cd80c6338e"
+dependencies = [
+ "serde_derive",
+]
+
+[[package]]
+name = "serde_derive"
+version = "1.0.216"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "46f859dbbf73865c6627ed570e78961cd3ac92407a2d117204c49232485da55e"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
 ]
 
 [[package]]
@@ -160,6 +201,7 @@ checksum = "0b928f33d975fc6ad9f86c8f283853ad26bdd5b10b7f1542aa2fa15e2289105a"
 name = "vsag-sqlite"
 version = "0.1.0"
 dependencies = [
+ "ron",
  "rusqlite",
 ]
 

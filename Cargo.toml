@@ -7,4 +7,5 @@ edition = "2021"
 crate-type = ["cdylib"]
 
 [dependencies]
+ron = "0.8"
 rusqlite = { git = "https://github.com/jiacai2050/rusqlite.git", branch = "vsag", features = ["modern_sqlite", "vtab", "loadable_extension", "functions"] }
