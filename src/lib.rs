@@ -2,7 +2,9 @@
 mod cursor;
 
 use std::any::Any;
+use std::cell::RefCell;
 use std::os::raw::{c_char, c_int};
+use std::rc::Rc;
 
 use crate::cursor::VsagCursor;
 use rusqlite::types::ValueRef;
@@ -27,11 +29,15 @@ fn extension_init(db: Connection) -> Result<bool> {
     Ok(true)
 }
 
+// pub type VectorStore = Rc<RefCell<Vec<(i64, Vec<f32>)>>>;
+pub type VectorStore = Vec<(i64, Vec<f32>)>;
+
+#[repr(C)]
 pub struct VsagTable {
     /// Base class. Must be first
     base: ffi::sqlite3_vtab,
     /// Core structure
-    vectors: Vec<(i64, Vec<f32>)>,
+    store: VectorStore,
     /// Number of cursors created
     n_cursor: usize,
 }
@@ -49,7 +55,7 @@ unsafe impl<'vtab> VTab<'vtab> for VsagTable {
         let schema = r#"CREATE TABLE x(id PRIMARY KEY, vec, score)"#;
         let table = Self {
             base: ffi::sqlite3_vtab::default(),
-            vectors: vec![],
+            store: Vec::new(),
             n_cursor: 0,
         };
         for (i, arg) in args.iter().enumerate() {
@@ -62,6 +68,7 @@ unsafe impl<'vtab> VTab<'vtab> for VsagTable {
     }
 
     fn best_index(&self, info: &mut IndexInfo) -> Result<()> {
+        println!("best_index: {info:?}");
         info.set_estimated_cost(500.);
         info.set_estimated_rows(500);
         Ok(())
@@ -69,7 +76,7 @@ unsafe impl<'vtab> VTab<'vtab> for VsagTable {
 
     fn open(&'vtab mut self) -> Result<Self::Cursor> {
         self.n_cursor += 1;
-        Ok(VsagCursor::new(self.n_cursor))
+        Ok(VsagCursor::new(self.n_cursor, self.store.clone()))
     }
 }
 
@@ -93,9 +100,10 @@ impl UpdateVTab<'_> for VsagTable {
         let vec: Vec<f32> = ron::from_str(&vec).map_err(|e| {
             Error::ModuleError(format!("vec column is not vector of f32, value:{vec}."))
         })?;
-        self.vectors.push((id, vec));
         println!("VTabLog::insert({id} {vec:?})",);
-        Ok(1)
+        println!("store :{:?}", self.store);
+        self.store.push((id, vec));
+        Ok(id)
     }
 
     fn update(&mut self, args: &rusqlite::vtab::Values<'_>) -> Result<()> {
