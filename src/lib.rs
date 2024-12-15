@@ -14,7 +14,6 @@ use rusqlite::{ffi, vtab::UpdateVTab};
 use rusqlite::{Connection, Error, Result};
 use tracing::debug;
 
-#[expect(clippy::not_unsafe_ptr_arg_deref)]
 #[no_mangle]
 pub unsafe extern "C" fn sqlite3_extension_init(
     db: *mut ffi::sqlite3,

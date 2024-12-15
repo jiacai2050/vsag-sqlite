@@ -1,0 +1,39 @@
+name: CI
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths-ignore:
+      - '**.md'
+  push:
+    branches:
+      - main
+      - master
+    paths-ignore:
+      - '**.md'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    timeout-minutes: 60
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+      - name: Install deps
+        run: |
+          sudo apt install -y gfortran libomp-15-dev lcov
+      - uses: Swatinem/rust-cache@v2
+      - name: fmt
+        run: |
+          make fmt
+          git diff --exit-code
+      - name: test
+        run: |
+          cargo build
+          sqlite3  /tmp/vsag.db < test.sql
+          make test
