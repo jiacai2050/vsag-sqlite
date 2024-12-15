@@ -1,9 +1,9 @@
 #+TITLE: VSAG Extensions for SQLite
 #+DATE: 2024-12-04T22:55:37+0800
-#+LASTMOD: 2024-12-15T21:37:13+0800
+#+LASTMOD: 2024-12-15T21:40:07+0800
 #+AUTHOR: Jiacai Liu
 
-[![CI](https://github.com/jiacai2050/vsag-sqlite/actions/workflows/CI.yml/badge.svg)](https://github.com/jiacai2050/vsag-sqlite/actions/workflows/CI.yml)
+[[https://github.com/jiacai2050/vsag-sqlite/actions/workflows/CI.yml][https://github.com/jiacai2050/vsag-sqlite/actions/workflows/CI.yml/badge.svg]]
 
 A SQLite extension for [[https://github.com/antgroup/vsag][VSAG]], a vector indexing library used for similarity search.
 
