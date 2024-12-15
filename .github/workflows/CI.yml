@@ -39,6 +39,6 @@ jobs:
           sqlite3  /tmp/vsag.db < test.sql
           make test
       - name: Debug
-        if: always
+        if: always()
         run: |
           find target -name libvsag.so
