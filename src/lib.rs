@@ -9,7 +9,10 @@ use vsag::VsagIndex;
 
 use crate::cursor::VsagCursor;
 use rusqlite::types::ValueRef;
-use rusqlite::vtab::{read_only_module, update_module, CreateVTab, IndexInfo, VTab, VTabKind};
+use rusqlite::vtab::{
+    parameter, read_only_module, update_module, CreateVTab, IndexConstraintOp, IndexInfo, VTab,
+    VTabKind,
+};
 use rusqlite::{ffi, vtab::UpdateVTab};
 use rusqlite::{Connection, Error, Result};
 use tracing::debug;
@@ -24,8 +27,7 @@ pub unsafe extern "C" fn sqlite3_extension_init(
 }
 
 fn extension_init(db: Connection) -> Result<bool> {
-    db.create_module("vsag_table", update_module::<VsagTable>(), None)?;
-
+    db.create_module("vsag", update_module::<VsagTable>(), None)?;
     tracing_subscriber::fmt::init();
 
     Ok(true)
@@ -50,7 +52,7 @@ pub struct VsagTable {
 pub enum Column {
     Id = 0,
     Vector,
-    Score,
+    Distance,
 }
 
 impl TryFrom<i32> for Column {
@@ -59,7 +61,7 @@ impl TryFrom<i32> for Column {
         match value {
             0 => Ok(Column::Id),
             1 => Ok(Column::Vector),
-            2 => Ok(Column::Score),
+            2 => Ok(Column::Distance),
             _ => Err(rusqlite::Error::ModuleError(format!(
                 "Invalid column number: {}",
                 value
@@ -78,8 +80,33 @@ unsafe impl<'vtab> VTab<'vtab> for VsagTable {
         aux: Option<&Self::Aux>,
         args: &[&[u8]],
     ) -> Result<(String, Self)> {
-        let schema = r#"CREATE TABLE x(id PRIMARY KEY, vec, score)"#;
-        let dim = 3;
+        let schema = r#"CREATE TABLE x(id PRIMARY KEY, vec, distance)"#;
+        let mut dim = None;
+        let args = &args[3..];
+        for c_slice in args {
+            let (param, value) = parameter(c_slice)?;
+            match param {
+                "dimension" => {
+                    let value = value.parse::<usize>().map_err(|e| {
+                        Error::ModuleError(format!("dimension should be a number, value:{value}."))
+                    })?;
+                    dim = Some(value);
+                }
+                _ => {
+                    return Err(Error::ModuleError(format!(
+                        "unknown param: {param}, value:{value}."
+                    )))
+                }
+            }
+        }
+        let dim = match dim {
+            None => {
+                return Err(Error::ModuleError(
+                    "`dimension` param is not set!".to_string(),
+                ))
+            }
+            Some(v) => v,
+        };
         let store = Rc::new(
             VsagIndex::new(
                 "hnsw",
@@ -97,7 +124,7 @@ unsafe impl<'vtab> VTab<'vtab> for VsagTable {
                     dim
                 ),
             )
-            .unwrap(),
+            .map_err(|e| Error::ModuleError(format!("create index failed, err:{e:?}.")))?,
         );
         let table = Self {
             base: ffi::sqlite3_vtab::default(),
@@ -125,10 +152,18 @@ unsafe impl<'vtab> VTab<'vtab> for VsagTable {
             if !usable {
                 continue;
             }
-            if col == 1 {
-                // vec column
+            if col == Column::Vector as c_int {
+                if !matches!(op, IndexConstraintOp::SQLITE_INDEX_CONSTRAINT_MATCH) {
+                    return Err(Error::ModuleError(format!(
+                        "Only support match operator for `vec` column"
+                    )));
+                }
                 usage.set_argv_index(1);
                 usage.set_omit(true);
+            } else {
+                return Err(Error::ModuleError(format!(
+                    "Only support filter by `vec` column"
+                )));
             }
         }
         Ok(())

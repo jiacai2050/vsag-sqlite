@@ -95,7 +95,7 @@ unsafe impl VTabCursor for VsagCursor<'_> {
 
         match Column::try_from(i)? {
             Column::Id => ctx.set_result(&result.ids[idx]),
-            Column::Score => ctx.set_result(&result.distances[idx]),
+            Column::Distance => ctx.set_result(&result.distances[idx]),
             Column::Vector => ctx.set_result(&Null),
         }
     }

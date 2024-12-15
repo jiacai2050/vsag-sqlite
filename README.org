@@ -1,8 +1,30 @@
 #+TITLE: VSAG Extensions for SQLite
 #+DATE: 2024-12-04T22:55:37+0800
-#+LASTMOD: 2024-12-15T20:29:09+0800
+#+LASTMOD: 2024-12-15T21:15:42+0800
 #+AUTHOR: Jiacai Liu
 
-A SQLite extension for [VSAG](https://github.com/antgroup/vsag), a vector indexing library used for similarity search.
+A SQLite extension for [[https://github.com/antgroup/vsag][VSAG]], a vector indexing library used for similarity search.
 
 * Usage
+#+begin_src bash :results verbatim :exports both :wrap sql
+cat test.sql
+#+end_src
+
+#+RESULTS:
+#+begin_sql
+
+.load target/debug/libvsag_sqlite
+
+CREATE VIRTUAL TABLE test_table
+USING vsag (dimension=3);
+
+insert into test_table(id, vec) values (1,'[1,2,3]');
+insert into test_table(vec, id) values ('[11,22,33]',2);
+
+SELECT * FROM test_table where vec match '[1,2,4]';
+#+end_sql
+If it everything works well, you will get:
+#+begin_quote
+1||1.0
+2||1341.0
+#+end_quote
