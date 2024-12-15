@@ -8,9 +8,10 @@ use std::rc::Rc;
 
 use crate::cursor::VsagCursor;
 use rusqlite::types::ValueRef;
-use rusqlite::vtab::{update_module, CreateVTab, IndexInfo, VTab, VTabKind};
+use rusqlite::vtab::{read_only_module, update_module, CreateVTab, IndexInfo, VTab, VTabKind};
 use rusqlite::{ffi, vtab::UpdateVTab};
 use rusqlite::{Connection, Error, Result};
+use tracing::debug;
 
 #[expect(clippy::not_unsafe_ptr_arg_deref)]
 #[no_mangle]
@@ -23,13 +24,13 @@ pub unsafe extern "C" fn sqlite3_extension_init(
 }
 
 fn extension_init(db: Connection) -> Result<bool> {
-    rusqlite::vtab::vtablog::load_module(&db)?;
     db.create_module("vsag_table", update_module::<VsagTable>(), None)?;
+
+    tracing_subscriber::fmt::init();
 
     Ok(true)
 }
 
-// pub type VectorStore = Rc<RefCell<Vec<(i64, Vec<f32>)>>>;
 pub type VectorStore = Vec<(i64, Vec<f32>)>;
 
 #[repr(C)]
@@ -40,6 +41,29 @@ pub struct VsagTable {
     store: VectorStore,
     /// Number of cursors created
     n_cursor: usize,
+}
+
+/// Column indexes for the vsag virtual table.
+#[repr(i32)]
+pub enum Column {
+    Id = 0,
+    Vector,
+    Score,
+}
+
+impl TryFrom<i32> for Column {
+    type Error = rusqlite::Error;
+    fn try_from(value: i32) -> Result<Self> {
+        match value {
+            0 => Ok(Column::Id),
+            1 => Ok(Column::Vector),
+            2 => Ok(Column::Score),
+            _ => Err(rusqlite::Error::ModuleError(format!(
+                "Invalid column number: {}",
+                value
+            ))),
+        }
+    }
 }
 
 unsafe impl<'vtab> VTab<'vtab> for VsagTable {
@@ -53,13 +77,17 @@ unsafe impl<'vtab> VTab<'vtab> for VsagTable {
         args: &[&[u8]],
     ) -> Result<(String, Self)> {
         let schema = r#"CREATE TABLE x(id PRIMARY KEY, vec, score)"#;
+        let store = vec![
+            (1_i64, vec![1.0, 2.0, 3.0]),
+            (2_i64, vec![11.0, 22.0, 33.0]),
+        ];
         let table = Self {
             base: ffi::sqlite3_vtab::default(),
-            store: Vec::new(),
+            store,
             n_cursor: 0,
         };
         for (i, arg) in args.iter().enumerate() {
-            println!(
+            debug!(
                 "connect args, i={i}, value={:?}",
                 String::from_utf8_lossy(arg)
             );
@@ -68,9 +96,22 @@ unsafe impl<'vtab> VTab<'vtab> for VsagTable {
     }
 
     fn best_index(&self, info: &mut IndexInfo) -> Result<()> {
-        println!("best_index: {info:?}");
-        info.set_estimated_cost(500.);
-        info.set_estimated_rows(500);
+        info.set_estimated_cost(1_000_000.);
+        let mut const_and_usages = info.constraints_and_usages();
+        for (cons, mut usage) in const_and_usages {
+            let col = cons.column();
+            let op = cons.operator();
+            let usable = cons.is_usable();
+            debug!("best_index cons: {col:?}, {usable}, {op:?}");
+            if !usable {
+                continue;
+            }
+            if col == 1 {
+                // vec column
+                usage.set_argv_index(1);
+                usage.set_omit(true);
+            }
+        }
         Ok(())
     }
 
@@ -100,8 +141,7 @@ impl UpdateVTab<'_> for VsagTable {
         let vec: Vec<f32> = ron::from_str(&vec).map_err(|e| {
             Error::ModuleError(format!("vec column is not vector of f32, value:{vec}."))
         })?;
-        println!("VTabLog::insert({id} {vec:?})",);
-        println!("store :{:?}", self.store);
+        debug!("VTabLog::insert({id} {vec:?})",);
         self.store.push((id, vec));
         Ok(id)
     }

@@ -2,11 +2,13 @@ use std::{ffi::c_int, marker::PhantomData};
 
 use rusqlite::{
     ffi,
-    types::ValueRef,
+    types::{Null, ValueRef},
     vtab::{Context, VTabCursor, Values},
+    Error,
 };
+use tracing::{debug, info};
 
-use crate::{VectorStore, VsagTable};
+use crate::{Column, VectorStore, VsagTable};
 
 /// A cursor for the Series virtual table
 #[repr(C)]
@@ -15,7 +17,8 @@ pub struct VsagCursor<'vtab> {
     base: ffi::sqlite3_vtab_cursor,
     store: VectorStore,
     cursor_id: usize,
-    row_id: usize,
+    row_id: i64,
+    limit: Option<usize>,
     phantom: PhantomData<&'vtab VsagTable>,
 }
 
@@ -25,7 +28,8 @@ impl VsagCursor<'_> {
             base: ffi::sqlite3_vtab_cursor::default(),
             store,
             cursor_id,
-            row_id: 0,
+            row_id: -1,
+            limit: None,
             phantom: PhantomData,
         }
     }
@@ -38,33 +42,53 @@ unsafe impl VTabCursor for VsagCursor<'_> {
         idx_str: Option<&str>,
         args: &Values<'_>,
     ) -> rusqlite::Result<()> {
-        println!(
-            "VTabCursor::filter({}, {:?}, {:?})",
-            idx_num,
-            idx_str,
-            args.iter().collect::<Vec<ValueRef<'_>>>()
-        );
+        if args.len() != 1 {
+            return Err(Error::ModuleError(format!("no where condition found!")));
+        }
+        let vec: String = args.get(0)?;
+
+        let vec: Vec<f32> = ron::from_str(&vec).map_err(|e| {
+            Error::ModuleError(format!("vec column is not vector of f32, value:{vec}."))
+        })?;
+        debug!("VTabCursor::filter({}, {:?}, {vec:?})", idx_num, idx_str,);
+        self.next();
         Ok(())
     }
 
     fn next(&mut self) -> rusqlite::Result<()> {
-        println!("VTabCursor::next");
+        debug!("VTabCursor::next");
+        self.row_id += 1;
         Ok(())
     }
 
     fn eof(&self) -> bool {
-        println!("VTabCursor::eof");
+        let eof = (self.row_id as usize) >= self.store.len();
+        debug!("VTabCursor::eof {eof}");
 
-        true
+        eof
     }
 
     fn column(&self, ctx: &mut Context, i: c_int) -> rusqlite::Result<()> {
-        println!("VTabCursor::column, i:{i}");
-
-        Ok(())
+        let idx = self.row_id as usize;
+        debug!(
+            "VTabCursor::column, i:{i}, idx:{idx}, store:{:?}",
+            self.store
+        );
+        match Column::try_from(i)? {
+            Column::Id => ctx.set_result(&self.store[idx].0),
+            Column::Vector => {
+                let vec = &self.store[idx].1;
+                let s = ron::to_string(vec).unwrap();
+                debug!(s=?s);
+                ctx.set_result(&s)
+            }
+            Column::Score => ctx.set_result(&2),
+        }
     }
 
     fn rowid(&self) -> rusqlite::Result<i64> {
-        Ok(1)
+        debug!("VTabCursor::rowid");
+        let idx = self.row_id as usize;
+        Ok(self.store[idx].0)
     }
 }
