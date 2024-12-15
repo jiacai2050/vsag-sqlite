@@ -1,15 +1,13 @@
 
 .load target/debug/libvsag_sqlite
 
-CREATE VIRTUAL TABLE log USING vsag_table(
-rows=2,
+CREATE VIRTUAL TABLE test_table
+USING vsag_table (
+    dim = 3,
 );
 
-insert into log(id, vec) values (1,'[1,2,3]');
-insert into log(vec, id) values ('[11,22,33]',2);
 
-SELECT * FROM log where vec = '[1,2,4]';
--- SELECT score FROM log where id=1 and vec ='[1,2,3]';
+insert into test_table(id, vec) values (1,'[1,2,3]');
+insert into test_table(vec, id) values ('[11,22,33]',2);
 
--- .schema log;
--- PRAGMA table_info(log);
+SELECT * FROM test_table where vec match '[1,2,4]';
