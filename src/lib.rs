@@ -5,6 +5,7 @@ use std::any::Any;
 use std::cell::RefCell;
 use std::os::raw::{c_char, c_int};
 use std::rc::Rc;
+use vsag::VsagIndex;
 
 use crate::cursor::VsagCursor;
 use rusqlite::types::ValueRef;
@@ -31,7 +32,7 @@ fn extension_init(db: Connection) -> Result<bool> {
     Ok(true)
 }
 
-pub type VectorStore = Vec<(i64, Vec<f32>)>;
+pub type VectorStore = Rc<VsagIndex>;
 
 #[repr(C)]
 pub struct VsagTable {
@@ -39,6 +40,8 @@ pub struct VsagTable {
     base: ffi::sqlite3_vtab,
     /// Core structure
     store: VectorStore,
+    /// Vector dimension size in store
+    dim: usize,
     /// Number of cursors created
     n_cursor: usize,
 }
@@ -77,13 +80,30 @@ unsafe impl<'vtab> VTab<'vtab> for VsagTable {
         args: &[&[u8]],
     ) -> Result<(String, Self)> {
         let schema = r#"CREATE TABLE x(id PRIMARY KEY, vec, score)"#;
-        let store = vec![
-            (1_i64, vec![1.0, 2.0, 3.0]),
-            (2_i64, vec![11.0, 22.0, 33.0]),
-        ];
+        let dim = 3;
+        let store = Rc::new(
+            VsagIndex::new(
+                "hnsw",
+                &format!(
+                    r#"
+{{
+  "dtype": "float32",
+  "metric_type": "l2",
+  "dim": {},
+  "hnsw": {{
+    "max_degree": 16,
+    "ef_construction": 200
+  }}
+}}"#,
+                    dim
+                ),
+            )
+            .unwrap(),
+        );
         let table = Self {
             base: ffi::sqlite3_vtab::default(),
             store,
+            dim,
             n_cursor: 0,
         };
         for (i, arg) in args.iter().enumerate() {
@@ -116,8 +136,9 @@ unsafe impl<'vtab> VTab<'vtab> for VsagTable {
     }
 
     fn open(&'vtab mut self) -> Result<Self::Cursor> {
+        debug!(cursor = self.n_cursor, "VsagTable::open");
         self.n_cursor += 1;
-        Ok(VsagCursor::new(self.n_cursor, self.store.clone()))
+        Ok(VsagCursor::new(self.n_cursor, self.dim, self.store.clone()))
     }
 }
 
@@ -136,13 +157,22 @@ impl UpdateVTab<'_> for VsagTable {
     // https://www.sqlite.org/vtab.html#the_xupdate_method
     fn insert(&mut self, args: &rusqlite::vtab::Values<'_>) -> Result<i64> {
         assert_eq!(args.len(), 5);
-        let id: i64 = args.get(2)?;
-        let vec: String = args.get(3)?;
+        let id: i64 = args.get(Column::Id as usize + 2)?;
+        let vec: String = args.get(Column::Vector as usize + 2)?;
         let vec: Vec<f32> = ron::from_str(&vec).map_err(|e| {
             Error::ModuleError(format!("vec column is not vector of f32, value:{vec}."))
         })?;
+        if vec.len() != self.dim {
+            return Err(Error::ModuleError(format!(
+                "vec column should have {} dimensions, value:{}.",
+                self.dim,
+                vec.len()
+            )));
+        }
         debug!("VTabLog::insert({id} {vec:?})",);
-        self.store.push((id, vec));
+        self.store
+            .build(1 /*num_vectors*/, self.dim, &vec![id], &vec)
+            .map_err(|e| Error::ModuleError(format!("add vec into index failed, err:{e:?}.")));
         Ok(id)
     }
 
