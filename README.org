@@ -1,6 +1,6 @@
 #+TITLE: VSAG Extensions for SQLite
 #+DATE: 2024-12-04T22:55:37+0800
-#+LASTMOD: 2024-12-15T21:25:21+0800
+#+LASTMOD: 2024-12-15T21:29:27+0800
 #+AUTHOR: Jiacai Liu
 
 A SQLite extension for [[https://github.com/antgroup/vsag][VSAG]], a vector indexing library used for similarity search.
@@ -18,12 +18,12 @@ export LD_LIBRARY_PATH=./target/debug
 #+end_src
 
 Then try SQL below:
-#+begin_src bash :results verbatim :exports both :wrap sql
+#+begin_src bash :results verbatim :exports results :wrap src sql
 cat test.sql
 #+end_src
 
 #+RESULTS:
-#+begin_sql
+#+begin_src sql
 
 .load target/debug/libvsag_sqlite
 
@@ -34,7 +34,7 @@ insert into test_table(id, vec) values (1,'[1,2,3]');
 insert into test_table(vec, id) values ('[11,22,33]',2);
 
 SELECT * FROM test_table where vec match '[1,2,4]';
-#+end_sql
+#+end_src
 If it everything works well, you will get:
 #+begin_src
 1||1.0
