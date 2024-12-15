@@ -1,11 +1,23 @@
 #+TITLE: VSAG Extensions for SQLite
 #+DATE: 2024-12-04T22:55:37+0800
-#+LASTMOD: 2024-12-15T21:15:42+0800
+#+LASTMOD: 2024-12-15T21:25:21+0800
 #+AUTHOR: Jiacai Liu
 
 A SQLite extension for [[https://github.com/antgroup/vsag][VSAG]], a vector indexing library used for similarity search.
 
 * Usage
+First install dependencies(other Linux distributions can refer [[https://github.com/antgroup/vsag/blob/main/DEVELOPMENT.md][DEVELOPMENT.md]]):
+#+begin_src bash
+sudo apt install -y gfortran libomp-15-dev lcov
+#+end_src
+
+Then build this project:
+#+begin_src bash
+cargo build
+export LD_LIBRARY_PATH=./target/debug
+#+end_src
+
+Then try SQL below:
 #+begin_src bash :results verbatim :exports both :wrap sql
 cat test.sql
 #+end_src
@@ -24,7 +36,7 @@ insert into test_table(vec, id) values ('[11,22,33]',2);
 SELECT * FROM test_table where vec match '[1,2,4]';
 #+end_sql
 If it everything works well, you will get:
-#+begin_quote
+#+begin_src
 1||1.0
 2||1341.0
-#+end_quote
+#+end_src

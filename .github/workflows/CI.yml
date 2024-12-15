@@ -35,5 +35,10 @@ jobs:
       - name: test
         run: |
           cargo build
+          export LD_LIBRARY_PATH=./target/debug
           sqlite3  /tmp/vsag.db < test.sql
           make test
+      - name: Debug
+        if: always
+        run: |
+          find target -name libvsag.so
