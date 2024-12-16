@@ -1,6 +1,6 @@
 #+TITLE: VSAG Extensions for SQLite
 #+DATE: 2024-12-04T22:55:37+0800
-#+LASTMOD: 2024-12-16T10:11:39+0800
+#+LASTMOD: 2024-12-16T10:32:33+0800
 #+AUTHOR: Jiacai Liu
 
 [[https://github.com/jiacai2050/vsag-sqlite/actions/workflows/CI.yml][https://github.com/jiacai2050/vsag-sqlite/actions/workflows/CI.yml/badge.svg]]
@@ -44,7 +44,7 @@ insert into test_table(id, vec) values (3,'[111,232,333]');
 
 SELECT id,distance FROM test_table where vec match '[1,2,4]';
 #+end_src
-If everything works well, the `select` will output:
+If everything works well, the =select= will output:
 #+begin_src
 1|1.0
 2|1341.0
