@@ -4,6 +4,8 @@ on:
   push:
     tags:
       - 'v*'
+    branches:
+      - 'fix*'
   workflow_dispatch:
 
 concurrency:
@@ -24,8 +26,8 @@ jobs:
         run: |
           cargo build --release
           so_file=$(find target -name libvsag.so | head -n1)
-          cp "${so_file}" ./target/
-          zip vsag-sqlite-${{ github.ref }}.zip "${so_file}" ./target/release/libvsag_sqlite.so
+          set -x
+          zip -j vsag-sqlite-${{ github.ref }}.zip "${so_file}" target/release/libvsag_sqlite.so
       - name: Upload
         uses: actions/upload-artifact@v4
         with:
@@ -39,3 +41,7 @@ jobs:
           file: vsag-sqlite-${{ github.ref }}.zip
           asset_name: vsag-sqlite-${{ github.ref }}.zip
           tag: ${{ github.ref }}
+      - name: Print so path
+        if: always()
+        run: |
+          find target -name libvsag*.so
