@@ -1,13 +1,13 @@
 #+TITLE: VSAG extension for SQLite
 #+DATE: 2024-12-04T22:55:37+0800
-#+LASTMOD: 2024-12-16T10:36:07+0800
+#+LASTMOD: 2024-12-16T10:36:40+0800
 #+AUTHOR: Jiacai Liu
 
 [[https://github.com/jiacai2050/vsag-sqlite/actions/workflows/CI.yml][https://github.com/jiacai2050/vsag-sqlite/actions/workflows/CI.yml/badge.svg]]
 
 A SQLite extension for [[https://github.com/antgroup/vsag][VSAG]], a vector indexing library used for similarity search.
 
-This extension provide a virtual table allowing users to add vectors in VSAG and do KNN searching.
+This extension provide a virtual table allowing users to add vectors to VSAG and do KNN searching.
 
 The schema of the virtual table is:
 #+begin_src sql
