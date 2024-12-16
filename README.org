@@ -1,13 +1,13 @@
-#+TITLE: VSAG extension for SQLite
+#+TITLE: vsag-sqlite
 #+DATE: 2024-12-04T22:55:37+0800
-#+LASTMOD: 2024-12-16T10:36:40+0800
+#+LASTMOD: 2024-12-16T11:12:51+0800
 #+AUTHOR: Jiacai Liu
 
 [[https://github.com/jiacai2050/vsag-sqlite/actions/workflows/CI.yml][https://github.com/jiacai2050/vsag-sqlite/actions/workflows/CI.yml/badge.svg]]
 
-A SQLite extension for [[https://github.com/antgroup/vsag][VSAG]], a vector indexing library used for similarity search.
+An vector search SQLite extension baked by [[https://github.com/antgroup/vsag][VSAG]], a vector indexing library used for similarity search.
 
-This extension provide a virtual table allowing users to add vectors to VSAG and do KNN searching.
+This extension provide a virtual table allowing users to add vectors to VSAG and do KNN style search.
 
 The schema of the virtual table is:
 #+begin_src sql
@@ -44,11 +44,17 @@ cat test.sql
 CREATE VIRTUAL TABLE test_table
 USING vsag (dimension=3);
 
-insert into test_table(id, vec) values (1,'[1,2,3]');
-insert into test_table(id, vec) values (2,'[11,22,33]');
-insert into test_table(id, vec) values (3,'[111,232,333]');
+INSERT INTO test_table (id, vec)
+    VALUES (1, '[1,2,3]'), (2, '[11,22,33]'), (3, '[111,232,333]');
 
-SELECT id,distance FROM test_table where vec match '[1,2,4]';
+-- KNN style query
+SELECT
+    id,
+    distance
+FROM
+    test_table
+WHERE
+    vec MATCH '[1,2,4]';
 #+end_src
 If everything works well, the =select= will output:
 #+begin_src
