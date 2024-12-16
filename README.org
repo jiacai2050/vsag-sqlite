@@ -1,37 +1,19 @@
 #+TITLE: vsag-sqlite
 #+DATE: 2024-12-04T22:55:37+0800
-#+LASTMOD: 2024-12-16T15:45:43+0800
+#+LASTMOD: 2024-12-16T16:36:15+0800
 #+AUTHOR: Jiacai Liu
 
 [[https://github.com/jiacai2050/vsag-sqlite/actions/workflows/CI.yml][https://github.com/jiacai2050/vsag-sqlite/actions/workflows/CI.yml/badge.svg]]
 
 An vector search SQLite extension baked by [[https://github.com/antgroup/vsag][VSAG]], a vector indexing library used for similarity search.
 
-This extension provide a virtual table allowing users to add vectors to VSAG and do KNN style search.
+This extension provide a virtual table allowing users to add vectors to VSAG and do KNN style search. The schema of the virtual table is:
 
-The schema of the virtual table is:
 #+begin_src sql
 CREATE TABLE vsag(id PRIMARY KEY, vec, distance)
 #+end_src
 * Usage
-First install dependencies(tested on Ubuntu, other Linux distributions can refer to [[https://github.com/antgroup/vsag/blob/main/DEVELOPMENT.md][DEVELOPMENT.md]]):
-#+begin_src bash
-sudo apt install -y gfortran libomp-15-dev lcov
-#+end_src
-
-Then build this project:
-#+begin_src bash
-cargo build
-#+end_src
-
-After build, set =LD_LIBRARY_PATH= to tell sqlite where to find our so files:
-#+begin_src bash
-so_file=$(find target -name libvsag.so | head -n1)
-cp "${so_file}" ./target/debug
-export LD_LIBRARY_PATH=./target/debug
-#+end_src
-
-Then execute SQL below in sqlite:
+Execute SQL below in sqlite:
 #+begin_src bash :results verbatim :exports results :wrap src sql
 cat test.sql
 #+end_src
@@ -62,4 +44,26 @@ If everything works well, the =SELECT= will output:
 1|1.0
 2|1341.0
 3|173241.0
+#+end_src
+* Install
+** Prebuilt binaries
+Go to [[https://github.com/jiacai2050/vsag-sqlite/releases][release page]] to download latest prebuilt binary.
+
+After download, set =LD_LIBRARY_PATH= env to where you unzip it.
+** Build from source
+First install dependencies(tested on Ubuntu, other Linux distributions can refer to [[https://github.com/antgroup/vsag/blob/main/DEVELOPMENT.md][DEVELOPMENT.md]]):
+#+begin_src bash
+sudo apt install -y gfortran libomp-15-dev lcov
+#+end_src
+
+Then build this project:
+#+begin_src bash
+cargo build
+#+end_src
+
+After build, set =LD_LIBRARY_PATH= to tell sqlite where to find our so files:
+#+begin_src bash
+so_file=$(find target -name libvsag.so | head -n1)
+cp "${so_file}" ./target/debug
+export LD_LIBRARY_PATH=./target/debug
 #+end_src
