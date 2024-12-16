@@ -12,6 +12,9 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  ZIP_FILE: /tmp/vsag-sqlite.zip
+
 jobs:
   publish:
     name: Publish
@@ -27,19 +30,18 @@ jobs:
           cargo build --release
           so_file=$(find target -name libvsag.so | head -n1)
           set -x
-          zip -j vsag-sqlite-${{ github.ref }}.zip "${so_file}" target/release/libvsag_sqlite.so
+          zip -j ${{ env.ZIP_FILE }} "${so_file}" target/release/libvsag_sqlite.so
       - name: Upload
         uses: actions/upload-artifact@v4
         with:
-          name: vsag-sqlite-${{ github.ref }}.zip
-          path: vsag-sqlite-${{ github.ref }}.zip
+          path: ${{ env.ZIP_FILE }}
       - name: Upload binaries to release
         uses: svenstaro/upload-release-action@v2
         if: startsWith(github.ref, 'refs/tags/v')
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: vsag-sqlite-${{ github.ref }}.zip
-          asset_name: vsag-sqlite-${{ github.ref }}.zip
+          file: ${{ env.ZIP_FILE }}
+          asset_name: vsag-sqlite.zip
           tag: ${{ github.ref }}
       - name: Print so path
         if: always()
