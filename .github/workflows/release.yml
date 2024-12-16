@@ -17,17 +17,20 @@ jobs:
     steps:
       - name: Checkout sources
         uses: actions/checkout@v4
-        with:
-          submodules: true
-
+      - name: Install deps
+        run: |
+          sudo apt install -y gfortran libomp-15-dev lcov
       - name: Build
         run: |
           cargo publish --release
+          so_file=$(find target -name libvsag.so | head -n1)
+          cp "${so_file}" ./target/
+          zip vsag-sqlite-${{ github.ref }}.zip "${so_file}" ./target/release/libvsag_sqlite.so
 
       - name: Upload binaries to release
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: ./target/release/libvsag_sqlite.so
-          asset_name: libvsag_sqlite.so
+          file: vsag-sqlite-${{ github.ref }}.zip
+          asset_name: vsag-sqlite-${{ github.ref }}.zip
           tag: ${{ github.ref }}

@@ -1,14 +1,20 @@
-#+TITLE: VSAG Extensions for SQLite
+#+TITLE: VSAG extension for SQLite
 #+DATE: 2024-12-04T22:55:37+0800
-#+LASTMOD: 2024-12-15T21:40:07+0800
+#+LASTMOD: 2024-12-16T10:36:40+0800
 #+AUTHOR: Jiacai Liu
 
 [[https://github.com/jiacai2050/vsag-sqlite/actions/workflows/CI.yml][https://github.com/jiacai2050/vsag-sqlite/actions/workflows/CI.yml/badge.svg]]
 
 A SQLite extension for [[https://github.com/antgroup/vsag][VSAG]], a vector indexing library used for similarity search.
 
+This extension provide a virtual table allowing users to add vectors to VSAG and do KNN searching.
+
+The schema of the virtual table is:
+#+begin_src sql
+CREATE TABLE vsag(id PRIMARY KEY, vec, distance)
+#+end_src
 * Usage
-First install dependencies(other Linux distributions can refer [[https://github.com/antgroup/vsag/blob/main/DEVELOPMENT.md][DEVELOPMENT.md]]):
+First install dependencies(tested on Ubuntu, other Linux distributions can refer to [[https://github.com/antgroup/vsag/blob/main/DEVELOPMENT.md][DEVELOPMENT.md]]):
 #+begin_src bash
 sudo apt install -y gfortran libomp-15-dev lcov
 #+end_src
@@ -16,10 +22,16 @@ sudo apt install -y gfortran libomp-15-dev lcov
 Then build this project:
 #+begin_src bash
 cargo build
+#+end_src
+
+After build, set =LD_LIBRARY_PATH= to tell sqlite where to find our so files:
+#+begin_src bash
+so_file=$(find target -name libvsag.so | head -n1)
+cp "${so_file}" ./target/debug
 export LD_LIBRARY_PATH=./target/debug
 #+end_src
 
-Then try SQL below:
+Then execute SQL below in sqlite:
 #+begin_src bash :results verbatim :exports results :wrap src sql
 cat test.sql
 #+end_src
@@ -38,7 +50,7 @@ insert into test_table(id, vec) values (3,'[111,232,333]');
 
 SELECT id,distance FROM test_table where vec match '[1,2,4]';
 #+end_src
-If everything works well, the `select` will output:
+If everything works well, the =select= will output:
 #+begin_src
 1|1.0
 2|1341.0
