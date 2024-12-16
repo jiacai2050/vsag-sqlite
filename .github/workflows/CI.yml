@@ -35,6 +35,8 @@ jobs:
       - name: test
         run: |
           cargo build
+          so_file=$(find target -name libvsag.so | head -n1)
+          cp "${so_file}" ./target/debug
           export LD_LIBRARY_PATH=./target/debug
           sqlite3  /tmp/vsag.db < test.sql
           make test

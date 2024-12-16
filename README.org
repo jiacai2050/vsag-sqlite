@@ -1,6 +1,6 @@
 #+TITLE: VSAG Extensions for SQLite
 #+DATE: 2024-12-04T22:55:37+0800
-#+LASTMOD: 2024-12-15T21:40:07+0800
+#+LASTMOD: 2024-12-16T08:25:14+0800
 #+AUTHOR: Jiacai Liu
 
 [[https://github.com/jiacai2050/vsag-sqlite/actions/workflows/CI.yml][https://github.com/jiacai2050/vsag-sqlite/actions/workflows/CI.yml/badge.svg]]
@@ -16,10 +16,12 @@ sudo apt install -y gfortran libomp-15-dev lcov
 Then build this project:
 #+begin_src bash
 cargo build
+so_file=$(find target -name libvsag.so | head -n1)
+cp "${so_file}" ./target/debug
 export LD_LIBRARY_PATH=./target/debug
 #+end_src
 
-Then try SQL below:
+Then execute SQL below in sqlite:
 #+begin_src bash :results verbatim :exports results :wrap src sql
 cat test.sql
 #+end_src
