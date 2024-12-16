@@ -4,8 +4,6 @@ on:
   push:
     tags:
       - 'v*'
-    branches:
-      - 'fix*'
   workflow_dispatch:
 
 concurrency:
@@ -28,9 +26,9 @@ jobs:
       - name: Build
         run: |
           cargo build --release
-          so_file=$(find target -name libvsag.so | head -n1)
+          SO_FILE=$(find target -name libvsag.so | head -n1)
           echo "SO_FILE=${SO_FILE}" >> $GITHUB_ENV
-          zip -j ${{ env.ZIP_FILE }} "${so_file}" target/release/libvsag_sqlite.so
+          zip -j ${{ env.ZIP_FILE }} "${SO_FILE}" target/release/libvsag_sqlite.so
       - name: Upload
         uses: actions/upload-artifact@v4
         with:
