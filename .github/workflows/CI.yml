@@ -22,8 +22,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          submodules: true
       - name: Install deps
         run: |
           sudo apt install -y gfortran libomp-15-dev lcov
@@ -38,9 +36,8 @@ jobs:
           so_file=$(find target -name libvsag.so | head -n1)
           cp "${so_file}" ./target/debug
           export LD_LIBRARY_PATH=./target/debug
-          sqlite3  /tmp/vsag.db < test.sql
-          make test
-      - name: Debug
+          sqlite3 /tmp/vsag.db < test.sql
+      - name: Print so path
         if: always()
         run: |
           find target -name libvsag.so

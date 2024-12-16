@@ -17,9 +17,9 @@ jobs:
     steps:
       - name: Checkout sources
         uses: actions/checkout@v4
-        with:
-          submodules: true
-
+      - name: Install deps
+        run: |
+          sudo apt install -y gfortran libomp-15-dev lcov
       - name: Build
         run: |
           cargo publish --release
