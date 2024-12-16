@@ -26,9 +26,14 @@ jobs:
           so_file=$(find target -name libvsag.so | head -n1)
           cp "${so_file}" ./target/
           zip vsag-sqlite-${{ github.ref }}.zip "${so_file}" ./target/release/libvsag_sqlite.so
-
+      - name: Upload
+        uses: actions/upload-artifact@v4
+        with:
+          name: vsag-sqlite-${{ github.ref }}.zip
+          path: vsag-sqlite-${{ github.ref }}.zip
       - name: Upload binaries to release
         uses: svenstaro/upload-release-action@v2
+        if: startsWith(github.ref, 'refs/tags/v')
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           file: vsag-sqlite-${{ github.ref }}.zip
