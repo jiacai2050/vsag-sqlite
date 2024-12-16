@@ -26,6 +26,8 @@ jobs:
         run: |
           sudo apt install -y gfortran libomp-15-dev lcov
       - uses: Swatinem/rust-cache@v2
+      - run: |
+          find target -name libvsag.so -delete
       - name: fmt
         run: |
           make fmt

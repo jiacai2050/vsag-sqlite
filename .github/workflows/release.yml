@@ -22,7 +22,7 @@ jobs:
           sudo apt install -y gfortran libomp-15-dev lcov
       - name: Build
         run: |
-          cargo publish --release
+          cargo build --release
           so_file=$(find target -name libvsag.so | head -n1)
           cp "${so_file}" ./target/
           zip vsag-sqlite-${{ github.ref }}.zip "${so_file}" ./target/release/libvsag_sqlite.so
