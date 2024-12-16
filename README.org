@@ -1,6 +1,6 @@
 #+TITLE: vsag-sqlite
 #+DATE: 2024-12-04T22:55:37+0800
-#+LASTMOD: 2024-12-16T11:12:51+0800
+#+LASTMOD: 2024-12-16T15:45:43+0800
 #+AUTHOR: Jiacai Liu
 
 [[https://github.com/jiacai2050/vsag-sqlite/actions/workflows/CI.yml][https://github.com/jiacai2050/vsag-sqlite/actions/workflows/CI.yml/badge.svg]]
@@ -56,7 +56,8 @@ FROM
 WHERE
     vec MATCH '[1,2,4]';
 #+end_src
-If everything works well, the =select= will output:
+
+If everything works well, the =SELECT= will output:
 #+begin_src
 1|1.0
 2|1341.0
